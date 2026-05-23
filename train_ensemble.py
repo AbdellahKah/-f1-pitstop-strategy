@@ -187,7 +187,8 @@ def main():
         'random_state': 42,
         'n_estimators': 1500,
         'n_jobs': -1,
-        'enable_categorical': True
+        'enable_categorical': True,
+        'early_stopping_rounds': 50
     }
 
     cat_params = {
@@ -198,7 +199,6 @@ def main():
         'iterations': 1500,
         'random_seed': 42,
         'thread_count': -1,
-        'task_type': 'GPU',
         'verbose': 0
     }
 
@@ -271,8 +271,7 @@ def main():
         model_xgb.fit(
             X_tr, y_tr,
             eval_set=[(X_val, y_val)],
-            verbose=False,
-            early_stopping_rounds=50
+            verbose=False
         )
         val_preds_xgb = model_xgb.predict_proba(X_val)[:, 1]
         oof_preds_xgb[val_idx] = val_preds_xgb
@@ -284,17 +283,18 @@ def main():
         # 3. CATBOOST
         # --------------------
         print("Training CatBoost...")
-        # Convert categories to strings for CatBoost Pool
-        X_tr_cat = X_tr.copy()
-        X_val_cat = X_val.copy()
-        X_tst_cat = X_tst_fold.copy()
-        for col in cat_cols_to_use:
+        # Convert categories to strings for CatBoost Pool (excluding target encoded high-cardinality interaction cols)
+        X_tr_cat = X_tr.drop(['Race_Compound', 'Race_Year'], axis=1)
+        X_val_cat = X_val.drop(['Race_Compound', 'Race_Year'], axis=1)
+        X_tst_cat = X_tst_fold.drop(['Race_Compound', 'Race_Year'], axis=1)
+        cat_features_cat = ['Driver', 'Compound', 'Race']
+        for col in cat_features_cat:
             X_tr_cat[col] = X_tr_cat[col].astype(str)
             X_val_cat[col] = X_val_cat[col].astype(str)
             X_tst_cat[col] = X_tst_cat[col].astype(str)
 
-        train_pool = Pool(X_tr_cat, y_tr, cat_features=cat_cols_to_use)
-        val_pool = Pool(X_val_cat, y_val, cat_features=cat_cols_to_use)
+        train_pool = Pool(X_tr_cat, y_tr, cat_features=cat_features_cat)
+        val_pool = Pool(X_val_cat, y_val, cat_features=cat_features_cat)
         
         model_cat = CatBoostClassifier(**cat_params)
         model_cat.fit(
