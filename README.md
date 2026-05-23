@@ -1,6 +1,6 @@
 # Kaggle F1 Pit Stops Prediction (Playground Series S6E5)
 
-This repository contains a high-performance machine learning pipeline designed to predict F1 driver pit stops (`PitNextLap`) using tabular strategy data. The solution leverages advanced domain-specific feature engineering, robust out-of-fold validation, data augmentation, and optimized ensembling of Gradient Boosted Decision Trees (GBDTs) as well as Tabular Neural Networks.
+This repository contains a high-performance machine learning pipeline designed to predict F1 driver pit stops (`PitNextLap`) using tabular strategy data. The solution leverages advanced domain-specific feature engineering, robust out-of-fold validation, data augmentation, and optimized ensembling of Gradient Boosted Decision Trees (GBDTs).
 
 ---
 
@@ -12,7 +12,6 @@ This repository contains a high-performance machine learning pipeline designed t
 ├── test.csv                                # Competition test dataset
 ├── sample_submission.csv                   # Sample submission template
 ├── train_ensemble.py                       # GBDT ensemble pipeline (LightGBM, XGBoost, CatBoost)
-├── ps-s6-e5-realmlp-pytabkit_example.ipynb  # Deep learning pipeline using PyTabKit (RealMLP)
 ├── oof_predictions.csv                     # Out-of-fold predictions generated from the GBDT ensemble
 ├── submission.csv                          # Final optimized predictions for Kaggle submission
 └── README.md                               # Project documentation
@@ -73,9 +72,6 @@ To ensure model generalizability and prevent overfitting:
 
 ## 📈 Models & Results
 
-The project implements two distinct modeling methodologies:
-
-### 1. GBDT Ensemble (`train_ensemble.py`)
 Three gradient boosting libraries are trained with early stopping on the 5-fold splits. SciPy's Nelder-Mead optimization is then used to find the mathematically optimal blending weights on the Out-of-Fold (OOF) predictions.
 
 | Model / Blend | OOF ROC-AUC Score | Blending Weight |
@@ -87,9 +83,6 @@ Three gradient boosting libraries are trained with early stopping on the 5-fold 
 
 *The ensembling process yielded a **0.952266 OOF ROC-AUC**, outperforming the single best model (XGBoost).*
 
-### 2. Tabular Neural Networks (`ps-s6-e5-realmlp-pytabkit_example.ipynb`)
-An alternative pipeline utilizing **PyTabKit's `RealMLP_TD_Classifier`** (an advanced tabular Multilayer Perceptron) is provided. It implements robust feature preprocessors (median centering, robust scaling, smooth clipping, one-hot/embedding layers) and reaches individual fold AUC scores between **0.9530 and 0.9551**.
-
 ---
 
 ## 🚀 How to Run
@@ -97,7 +90,7 @@ An alternative pipeline utilizing **PyTabKit's `RealMLP_TD_Classifier`** (an adv
 ### Dependencies
 Ensure you have the required packages installed:
 ```bash
-pip install pandas numpy lightgbm xgboost catboost scikit-learn scipy pytorch pytabkit
+pip install pandas numpy lightgbm xgboost catboost scikit-learn scipy
 ```
 
 ### Running the GBDT Ensemble
@@ -108,6 +101,3 @@ python train_ensemble.py
 This will produce:
 - `oof_predictions.csv`: Out-of-fold predictions for validation.
 - `submission.csv`: Final test predictions formatted for Kaggle (shape `(188165, 2)` with columns `id` and `PitNextLap`).
-
-### Running the Tabular Neural Network
-Open and run the Jupyter notebook `ps-s6-e5-realmlp-pytabkit_example.ipynb` in your environment (with GPU support recommended for PyTabKit training).
