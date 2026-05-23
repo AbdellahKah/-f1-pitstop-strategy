@@ -56,6 +56,9 @@ def main():
     # Compound stats for TyreLife proxy
     compound_tyrelife_stats = X.groupby('Compound')['TyreLife'].agg(['mean', 'std']).to_dict()
 
+    # Actual total laps per race & year based on observed max lap in entire dataset
+    total_laps_map = combined.groupby(['Race', 'Year'])['LapNumber'].max().to_dict()
+
     def engineer_features(df):
         df = df.copy()
         
@@ -71,8 +74,8 @@ def main():
         df['_LapTime (s)_*_Cumulative_Degradation_abs'] = (df['LapTime (s)'] * df['Cumulative_Degradation'].abs()).astype('float32')
         df['_LapTime (s)_/_Cumulative_Degradation_abs'] = (df['LapTime (s)'] / (df['Cumulative_Degradation'].abs() + 1e-6)).astype('float32')
 
-        # Estimated total laps
-        df['_TotalLaps_est'] = (df['LapNumber'] / (df['RaceProgress'] + 1e-8)).astype('float32')
+        # Actual total laps based on observed max lap per race/year
+        df['_TotalLaps_actual'] = pd.MultiIndex.from_frame(df[['Race', 'Year']]).map(total_laps_map).astype('float32')
 
         # Lap when tires were fitted
         df['_TyreStartLap'] = (df['LapNumber'] - df['TyreLife']).astype('float32')
@@ -100,8 +103,8 @@ def main():
         df['_Position_x_RaceProgress'] = (df['Position'] * df['RaceProgress']).astype('float32')
         df['_Position_x_TyreLife'] = (df['Position'] * df['TyreLife']).astype('float32')
 
-        # Laps remaining estimate
-        df['_LapsRemaining_est'] = (df['_TotalLaps_est'] - df['LapNumber']).astype('float32')
+        # Laps remaining estimate based on actual race length
+        df['_LapsRemaining_est'] = (df['_TotalLaps_actual'] - df['LapNumber']).astype('float32')
 
         # TyreLife relative to estimated race end
         df['_TyreLife_vs_LapsRemaining'] = (df['TyreLife'] / (df['_LapsRemaining_est'] + 1e-6)).astype('float32')
@@ -175,6 +178,7 @@ def main():
         'objective': 'binary:logistic',
         'eval_metric': 'auc',
         'tree_method': 'hist',
+        'device': 'cuda',
         'learning_rate': 0.05,
         'max_depth': 8,
         'subsample': 0.8,
@@ -194,10 +198,11 @@ def main():
         'iterations': 1500,
         'random_seed': 42,
         'thread_count': -1,
+        'task_type': 'GPU',
         'verbose': 0
     }
 
-    print("Starting 5-Fold Cross-Validation training of LGBM, XGBoost, and CatBoost...")
+    print(f"Starting {folds}-Fold Cross-Validation training of LGBM, XGBoost, and CatBoost...")
 
     for fold, ((tr_idx, val_idx), (or_tr_idx, or_val_idx)) in enumerate(
             zip(skf.split(X, y), skf.split(X_orig, y_orig)), 1):
