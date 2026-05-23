@@ -20,6 +20,17 @@ This repository contains a high-performance machine learning pipeline designed t
 
 ---
 
+## 📁 Data
+
+Competition data (`train.csv`, `test.csv`, `sample_submission.csv`) is not included in this repository per Kaggle's terms of use. Download it directly from the competition page:
+
+👉 [Kaggle Playground Series S6E5](https://www.kaggle.com/competitions/playground-series-s6e5/data)
+
+The external augmentation dataset (`f1_strategy_dataset_v4.csv`) can be found on Kaggle datasets.
+
+---
+
+
 ## 🛠️ Feature Engineering Pipeline
 
 A major differentiator in predicting F1 pit strategy is constructing domain-specific features that model tire wear, track progression, and team strategies. The following features were engineered and processed:
