@@ -125,6 +125,9 @@ def main():
 
         return df
 
+    print("Initial columns in train dataset:", X.columns.tolist())
+    print("Checking if 'Position' in dataset:", 'Position' in X.columns)
+    print("Checking if 'GapToLeader' in dataset:", 'GapToLeader' in X.columns)
     print("Engineering features...")
     X = engineer_features(X)
     X_orig = engineer_features(X_orig)
@@ -133,7 +136,7 @@ def main():
     print(f"Dataset columns: {X.columns.tolist()}")
 
     # Set up StratifiedKFold
-    folds = 5
+    folds = 10
     skf = StratifiedKFold(n_splits=folds, shuffle=True, random_state=42)
 
     # OOF Prediction Arrays
@@ -263,7 +266,8 @@ def main():
         model_xgb.fit(
             X_tr, y_tr,
             eval_set=[(X_val, y_val)],
-            verbose=False
+            verbose=False,
+            early_stopping_rounds=50
         )
         val_preds_xgb = model_xgb.predict_proba(X_val)[:, 1]
         oof_preds_xgb[val_idx] = val_preds_xgb
@@ -322,8 +326,14 @@ def main():
         return -roc_auc_score(y, blend)
 
     # Grid search / Nelder-Mead optimization
-    res = minimize(objective, [1/3, 1/3, 1/3], method='Nelder-Mead')
-    best_weights = res.x / np.sum(res.x)
+    best_score = np.inf
+    best_weights = None
+
+    for w0 in [[1/3,1/3,1/3], [0.1,0.7,0.2], [0.2,0.6,0.2], [0.0,1.0,0.0], [0.1,0.8,0.1]]:
+        res = minimize(objective, w0, method='Nelder-Mead')
+        if res.fun < best_score:
+            best_score = res.fun
+            best_weights = res.x / np.sum(res.x)
     
     print(f"Optimal Blending Weights: LightGBM={best_weights[0]:.4f}, XGBoost={best_weights[1]:.4f}, CatBoost={best_weights[2]:.4f}")
     
