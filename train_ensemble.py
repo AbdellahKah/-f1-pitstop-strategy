@@ -96,6 +96,25 @@ def main():
         # Year interactions
         df['_Year_diff'] = (df['Year'] - 2022).astype('float32')
 
+        # Position-based pit strategy signal
+        df['_Position_x_RaceProgress'] = (df['Position'] * df['RaceProgress']).astype('float32')
+        df['_Position_x_TyreLife'] = (df['Position'] * df['TyreLife']).astype('float32')
+
+        # Laps remaining estimate
+        df['_LapsRemaining_est'] = (df['_TotalLaps_est'] - df['LapNumber']).astype('float32')
+
+        # TyreLife relative to estimated race end
+        df['_TyreLife_vs_LapsRemaining'] = (df['TyreLife'] / (df['_LapsRemaining_est'] + 1e-6)).astype('float32')
+
+        # Gap to leader interaction (Note: GapToLeader column is not present in the dataset)
+        # df['_GapToLeader_x_TyreLife'] = (df['GapToLeader'] * df['TyreLife']).astype('float32')
+        # df['_GapToLeader_x_RaceProgress'] = (df['GapToLeader'] * df['RaceProgress']).astype('float32')
+
+
+        # Stint number squared (non-linear stint effect)
+        df['_Stint_squared'] = (df['Stint'] ** 2).astype('float32')
+
+
         # Convert categories to category type
         for col in ['Driver', 'Compound', 'Race']:
             df[col] = df[col].astype('category')
