@@ -43,5 +43,4 @@ venv.bak/
 
 # Project-specific ignores
 catboost_info/
-*.csv
 .directory
